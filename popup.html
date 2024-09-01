@@ -81,6 +81,49 @@
       visibility: visible;
       opacity: 1;
     }
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 60px;
+      height: 34px;
+    }
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 26px;
+      width: 26px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .4s;
+    }
+    input:checked + .slider {
+      background-color: #2196F3;
+    }
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+    .slider.round {
+      border-radius: 34px;
+    }
+    .slider.round:before {
+      border-radius: 50%;
+    }
   </style>
 </head>
 <body>
@@ -133,6 +176,17 @@
       <span class="tooltiptext">Maximum number of items to review in one session. Default: 20</span>
     </label>
     <input type="number" id="reviewsPerSession" min="1" max="100" value="20">
+    <h4>Highlight Settings</h4>
+    <label for="highlightBackgroundColor" class="tooltip">
+      Highlight Background Color:
+      <span class="tooltiptext">Choose the background color for highlights.</span>
+    </label>
+    <input type="color" id="highlightBackgroundColor" value="#ffff00">
+    <label for="highlightTextColor" class="tooltip">
+      Highlight Text Color:
+      <span class="tooltiptext">Choose the text color for highlights.</span>
+    </label>
+    <input type="color" id="highlightTextColor" value="#000000">
     <button id="saveSettings">Save Settings</button>
   </div>
   <script type="module" src="popup.js"></script>

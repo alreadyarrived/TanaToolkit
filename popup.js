@@ -17,8 +17,9 @@ document.addEventListener('DOMContentLoaded', async function() {
   const stabilityAdditionInput = document.getElementById('stabilityAddition');
   const reviewsPerSessionInput = document.getElementById('reviewsPerSession');
 
-  // Add this after other const declarations
   const highlightToggle = document.getElementById('highlightToggle');
+  const highlightBackgroundColorInput = document.getElementById('highlightBackgroundColor');
+  const highlightTextColorInput = document.getElementById('highlightTextColor');
 
   // Load and display current settings
   const settings = await loadSettings();
@@ -28,6 +29,8 @@ document.addEventListener('DOMContentLoaded', async function() {
   difficultyAdditionInput.value = settings.fsrs.difficultyAddition;
   stabilityAdditionInput.value = settings.fsrs.stabilityAddition;
   reviewsPerSessionInput.value = settings.fsrs.reviewsPerSession;
+  highlightBackgroundColorInput.value = settings.highlightStyle.backgroundColor;
+  highlightTextColorInput.value = settings.highlightStyle.textColor;
 
   chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
     const currentUrl = tabs[0].url;
@@ -37,7 +40,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     } else {
       webCaptureDiv.style.display = 'block';
       tanaToolsDiv.style.display = 'none';
-      // Check current highlight mode state
       chrome.tabs.sendMessage(tabs[0].id, {action: "getHighlights"}, function(response) {
         if (response && response.highlights) {
           highlightToggle.checked = response.highlights.length > 0;
@@ -99,7 +101,16 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
   });
 
-  saveSettingsButton.addEventListener('click', async function() {
+  // Debounce function to limit the rate of function execution
+  function debounce(func, wait) {
+    let timeout;
+    return function(...args) {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func.apply(this, args), wait);
+    };
+  }
+
+  saveSettingsButton.addEventListener('click', debounce(async function() {
     const newSettings = {
       tanaApiKey: tanaApiKeyInput.value,
       inboxNodeId: inboxNodeIdInput.value,
@@ -108,10 +119,14 @@ document.addEventListener('DOMContentLoaded', async function() {
         difficultyAddition: parseFloat(difficultyAdditionInput.value),
         stabilityAddition: parseFloat(stabilityAdditionInput.value),
         reviewsPerSession: parseInt(reviewsPerSessionInput.value, 10)
+      },
+      highlightStyle: {
+        backgroundColor: highlightBackgroundColorInput.value,
+        textColor: highlightTextColorInput.value
       }
     };
     await saveSettings(newSettings);
     statusMessage.textContent = "Settings saved successfully!";
     statusMessage.style.color = "green";
-  });
+  }, 300));
 });

@@ -301,91 +301,25 @@ let highlightStyle = {
 // Load settings when the content script initializes
 loadSettings().then(settings => {
   highlightStyle = settings.highlightStyle || highlightStyle;
+  highlightMode = settings.highlightMode || false;
+  if (highlightMode) {
+    if (isPDF()) {
+      window.addEventListener('mouseup', handleHighlight);
+      createHighlightOverlay();
+    } else {
+      document.addEventListener('mouseup', handleHighlight);
+    }
+  }
 });
 
-let highlightOverlay;
-
-function createHighlightOverlay() {
-  highlightOverlay = document.createElement('div');
-  highlightOverlay.id = 'tana-highlight-overlay';
-  highlightOverlay.style.cssText = `
-    position: fixed;
-    top: 10px;
-    right: 10px;
-    width: 250px;
-    max-height: 80vh;
-    overflow-y: auto;
-    background-color: rgba(255, 255, 255, 0.9);
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    padding: 10px;
-    font-family: Arial, sans-serif;
-    font-size: 14px;
-    z-index: 10000;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  `;
-  document.body.appendChild(highlightOverlay);
+function saveHighlightModeState() {
+  chrome.storage.sync.set({ highlightMode });
 }
 
-function updateHighlightOverlay() {
-  if (!highlightOverlay) {
-    createHighlightOverlay();
-  }
-  highlightOverlay.innerHTML = `
-    <h3 style="margin-top: 0;">Highlights</h3>
-    ${highlights.map((highlight, index) => `
-      <div style="margin-bottom: 10px; padding: 5px; background-color: ${highlightStyle.backgroundColor}; color: ${highlightStyle.textColor};">
-        ${highlight}
-        <button class="remove-highlight" data-index="${index}" style="float: right; background: none; border: none; cursor: pointer;">×</button>
-      </div>
-    `).join('')}
-  `;
-  
-  // Add event listeners to remove buttons
-  highlightOverlay.querySelectorAll('.remove-highlight').forEach(button => {
-    button.addEventListener('click', function() {
-      const index = parseInt(this.getAttribute('data-index'));
-      highlights.splice(index, 1);
-      updateHighlightOverlay();
-    });
-  });
-}
-
-function handleHighlight(event) {
-  if (!highlightMode) return;
-
-  let selectedText;
-  if (isPDF()) {
-    selectedText = window.getSelection().toString().trim();
-    if (selectedText) {
-      console.log("Text selected in PDF:", selectedText);
-      highlights.push(selectedText);
-      updateHighlightOverlay();
-    }
-  } else {
-    // For regular web pages, keep the existing highlighting logic
-    const selection = window.getSelection();
-    selectedText = selection.toString().trim();
-    if (selectedText) {
-      console.log("Text selected:", selectedText);
-      highlights.push(selectedText);
-      const range = selection.getRangeAt(0);
-      const span = document.createElement('span');
-      span.style.backgroundColor = highlightStyle.backgroundColor;
-      span.style.color = highlightStyle.textColor;
-      span.style.textShadow = 'none';
-      span.textContent = selectedText;
-      range.deleteContents();
-      range.insertNode(span);
-      selection.removeAllRanges();
-    }
-  }
-}
-
-// Modify the listener to handle the highlight overlay
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "toggleHighlightMode") {
     highlightMode = request.enabled;
+    saveHighlightModeState();
     console.log("Highlight mode toggled:", highlightMode);
     if (highlightMode) {
       if (isPDF()) {

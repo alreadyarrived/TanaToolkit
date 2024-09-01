@@ -12,6 +12,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       .catch(error => {
         console.error('Error capturing for Tana:', error);
         sendResponse({success: false, error: error.message});
+        chrome.notifications.create({
+          type: 'basic',
+          iconUrl: 'images/icon128.png',
+          title: 'Tana Helper',
+          message: `Failed to capture page: ${error.message}`
+        });
       });
     return true; // Indicates we will send a response asynchronously
   }
